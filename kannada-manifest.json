@@ -1,0 +1,20 @@
+{
+  "name": "KannadaEasy - Learn Kannada from Hindi",
+  "short_name": "KannadaEasy",
+  "description": "हिंदी बोलने वालों के लिए कन्नड सीखें - Duolingo-style Kannada learning for Hindi speakers",
+  "start_url": "./kannada-learn.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f0ff",
+  "theme_color": "#7c3aed",
+  "categories": ["education"],
+  "lang": "hi",
+  "icons": [
+    {
+      "src": "./kannada-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KannadaEasy</title>
+<!-- PWA -->
+<link rel="manifest" href="./kannada-manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KannadaEasy">
+<link rel="apple-touch-icon" href="./kannada-icon.svg">
+<meta name="description" content="हिंदी बोलने वालों के लिए कन्नड सीखें">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;600&family=Baloo+2:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0ff;
+  --surface: #ffffff;
+  --surface-hover: #f8f5ff;
+  --text: #1a1a2e;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-light: #ede9fe;
+  --green: #10b981;
+  --green-light: #d1fae5;
+  --red: #ef4444;
+  --red-light: #fee2e2;
+  --orange: #f59e0b;
+  --orange-light: #fef3c7;
+  --gold: #eab308;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --font-hindi: 'Noto Sans Devanagari', sans-serif;
+  --font-kannada: 'Noto Sans Kannada', sans-serif;
+  --font-display: 'Baloo 2', cursive;
+}
+[data-theme="dark"] {
+  --bg: #0f0a1e;
+  --surface: #1a1530;
+  --surface-hover: #241e40;
+  --text: #e5e5e5;
+  --text-secondary: #9ca3af;
+  --border: #2d2750;
+  --accent: #a78bfa;
+  --accent-hover: #8b5cf6;
+  --accent-light: #1e1640;
+  --green-light: #064e3b;
+  --red-light: #450a0a;
+  --orange-light: #451a03;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-hindi);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+  padding-top: env(safe-area-inset-top);
+}
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* Top Bar */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-stats { display: flex; align-items: center; gap: 16px; font-size: 14px; font-weight: 600; }
+.stat { display: flex; align-items: center; gap: 4px; }
+.stat-fire { color: #f59e0b; }
+.stat-xp { color: var(--accent); }
+.stat-heart { color: var(--red); }
+.topbar-actions { display: flex; gap: 8px; }
+.icon-btn {
+  background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 8px;
+  border-radius: 8px; transition: background 0.2s; color: var(--text);
+}
+.icon-btn:hover { background: var(--accent-light); }
+
+/* Home Screen - Skill Tree */
+.home-header { text-align: center; padding: 24px 16px 8px; }
+.home-header h1 { font-family: var(--font-display); font-size: 28px; color: var(--accent); }
+.home-header p { color: var(--text-secondary); margin-top: 4px; }
+.daily-goal {
+  margin: 16px auto; max-width: 360px; padding: 16px;
+  background: var(--surface); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); text-align: center;
+}
+.goal-bar { height: 8px; background: var(--border); border-radius: 4px; margin: 8px 0; overflow: hidden; }
+.goal-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.5s; }
+.skill-tree {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 16px 100px; gap: 12px; max-width: 400px; margin: 0 auto;
+}
+.tree-node {
+  width: 72px; height: 72px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 28px; cursor: pointer; border: 3px solid var(--border);
+  background: var(--surface); box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s; position: relative;
+}
+.tree-node:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); }
+.tree-node.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+.tree-node.available { border-color: var(--accent); }
+.tree-node.completed { border-color: var(--green); background: var(--green-light); }
+.tree-node.perfect { border-color: var(--gold); background: #fef9c3; }
+.tree-node.bonus { border-color: var(--orange); border-style: dashed; }
+.tree-label {
+  font-size: 11px; font-weight: 600; text-align: center;
+  margin-top: 4px; max-width: 100px; color: var(--text-secondary);
+}
+.tree-row { display: flex; flex-direction: column; align-items: center; }
+.tree-connector { width: 2px; height: 16px; background: var(--border); }
+.tree-connector.completed { background: var(--green); }
+.bonus-section {
+  margin-top: 24px; padding-top: 24px; border-top: 2px dashed var(--orange);
+  text-align: center; width: 100%;
+}
+.bonus-section h3 { color: var(--orange); font-size: 14px; margin-bottom: 12px; }
+.bonus-row { display: flex; justify-content: center; gap: 24px; }
+
+/* Lesson Screen */
+.lesson-topbar {
+  display: flex; align-items: center; padding: 12px 16px; gap: 12px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.lesson-close { font-size: 24px; background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+.progress-bar { flex: 1; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 5px; transition: width 0.4s ease; }
+.lesson-hearts { display: flex; gap: 2px; font-size: 18px; }
+.lesson-content {
+  max-width: 500px; margin: 0 auto; padding: 24px 16px;
+  display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 150px);
+}
+.question-label { font-size: 16px; font-weight: 600; margin-bottom: 20px; text-align: center; color: var(--text-secondary); }
+.word-display {
+  font-size: 36px; font-weight: 700; text-align: center; margin: 16px 0;
+  font-family: var(--font-hindi);
+}
+.word-image { font-size: 64px; margin-bottom: 8px; line-height: 1.2; }
+.word-image img { width: 120px; height: 120px; object-fit: cover; border-radius: var(--radius); }
+.transliteration { font-size: 14px; color: var(--text-secondary); margin-top: 4px; font-style: italic; }
+.speak-btn {
+  background: var(--accent-light); border: none; cursor: pointer; font-size: 24px;
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; margin: 8px 0; transition: background 0.2s;
+}
+.speak-btn:hover { background: var(--accent); color: white; }
+.speak-btn.listen-big {
+  width: 80px; height: 80px; font-size: 36px; margin: 16px 0;
+  border: 3px solid var(--accent); background: var(--accent-light);
+}
+.speak-btn.listen-big:hover { background: var(--accent); transform: scale(1.05); }
+
+/* Flashcard */
+.flashcard {
+  width: 100%; max-width: 320px; min-height: 280px;
+  background: var(--surface); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg); padding: 32px 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: transform 0.3s; perspective: 1000px;
+  text-align: center;
+}
+.flashcard:hover { transform: translateY(-2px); }
+.flashcard .reveal { color: var(--green); font-size: 24px; font-weight: 600; margin-top: 16px; display: none; }
+.flashcard.flipped .reveal { display: block; }
+.flashcard .tap-hint { color: var(--text-secondary); font-size: 13px; margin-top: 16px; }
+.flashcard.flipped .tap-hint { display: none; }
+
+/* MCQ Options */
+.options { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.option-btn {
+  width: 100%; padding: 14px 20px; background: var(--surface);
+  border: 2px solid var(--border); border-radius: var(--radius);
+  font-size: 18px; font-family: var(--font-hindi); cursor: pointer;
+  text-align: left; transition: all 0.2s; color: var(--text);
+}
+.option-btn:hover:not(.disabled) { border-color: var(--accent); background: var(--accent-light); }
+.option-btn.correct { border-color: var(--green); background: var(--green-light); }
+.option-btn.wrong { border-color: var(--red); background: var(--red-light); }
+.option-btn.disabled { cursor: default; opacity: 0.7; }
+
+/* Matching */
+.match-area { display: flex; gap: 24px; width: 100%; max-width: 400px; justify-content: center; }
+.match-col { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.match-item {
+  padding: 12px 16px; background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; text-align: center;
+  font-size: 16px; font-family: var(--font-hindi); transition: all 0.2s;
+  min-height: 48px; display: flex; align-items: center; justify-content: center;
+}
+.match-item:hover:not(.matched):not(.selected) { border-color: var(--accent); }
+.match-item.selected { border-color: var(--accent); background: var(--accent-light); }
+.match-item.matched { border-color: var(--green); background: var(--green-light); opacity: 0.6; cursor: default; }
+.match-item.wrong-match { border-color: var(--red); background: var(--red-light); }
+
+
+/* Continue Button */
+.continue-btn {
+  width: 100%; max-width: 400px; padding: 14px; background: var(--accent);
+  color: white; border: none; border-radius: var(--radius); font-size: 18px;
+  font-weight: 600; cursor: pointer; margin-top: 24px; transition: background 0.2s;
+  font-family: var(--font-hindi);
+}
+.continue-btn:hover { background: var(--accent-hover); }
+.continue-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Feedback bar */
+.feedback-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px calc(16px + env(safe-area-inset-bottom)) 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-weight: 600; font-size: 16px; z-index: 200; transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+.feedback-bar.show { transform: translateY(0); }
+.feedback-bar.correct { background: var(--green-light); color: #065f46; border-top: 2px solid var(--green); }
+.feedback-bar.wrong { background: var(--red-light); color: #991b1b; border-top: 2px solid var(--red); }
+.feedback-bar .fb-btn {
+  padding: 10px 24px; border-radius: var(--radius); border: none;
+  font-size: 16px; font-weight: 600; cursor: pointer; font-family: var(--font-hindi);
+}
+.feedback-bar.correct .fb-btn { background: var(--green); color: white; }
+.feedback-bar.wrong .fb-btn { background: var(--red); color: white; }
+
+/* Lesson Complete Screen */
+.complete-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 24px; text-align: center;
+}
+.complete-icon { font-size: 72px; margin-bottom: 16px; }
+.complete-title { font-family: var(--font-display); font-size: 32px; color: var(--accent); }
+.complete-stats { display: flex; gap: 32px; margin: 24px 0; }
+.complete-stat { text-align: center; }
+.complete-stat .val { font-size: 28px; font-weight: 700; color: var(--accent); }
+.complete-stat .lbl { font-size: 13px; color: var(--text-secondary); }
+
+/* Review Screen */
+.review-header { text-align: center; padding: 24px 16px; }
+.review-header h2 { font-family: var(--font-display); font-size: 24px; }
+.review-empty { text-align: center; padding: 48px; color: var(--text-secondary); }
+.review-word-list {
+  max-width: 500px; margin: 0 auto; padding: 0 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.review-word-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--surface);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.review-word-item .rw-kannada { font-size: 18px; font-weight: 600; }
+.review-word-item .rw-hindi { font-size: 14px; color: var(--text-secondary); }
+
+/* Stats Screen */
+.stats-header { text-align: center; padding: 24px 16px; }
+.stats-header h2 { font-family: var(--font-display); font-size: 24px; }
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  max-width: 400px; margin: 16px auto; padding: 0 16px;
+}
+.stats-card {
+  background: var(--surface); border-radius: var(--radius); padding: 20px;
+  text-align: center; box-shadow: var(--shadow);
+}
+.stats-card .sc-val { font-size: 32px; font-weight: 700; color: var(--accent); }
+.stats-card .sc-lbl { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: space-around; padding: 8px 0 calc(12px + env(safe-area-inset-bottom));
+  background: var(--surface); border-top: 1px solid var(--border); z-index: 99;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  cursor: pointer; padding: 4px 16px; border: none; background: none;
+  color: var(--text-secondary); font-size: 10px; font-family: var(--font-hindi);
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--accent); }
+.nav-item .nav-icon { font-size: 22px; }
+
+/* Animations */
+@keyframes bounceIn { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+.anim-bounce { animation: bounceIn 0.4s ease; }
+.anim-shake { animation: shake 0.4s ease; }
+.anim-fadeup { animation: fadeUp 0.4s ease; }
+
+/* Login / Profile Screen */
+.login-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 24px; text-align: center;
+}
+.login-title { font-family: var(--font-display); font-size: 36px; color: var(--accent); }
+.login-subtitle { color: var(--text-secondary); margin: 4px 0 28px; font-size: 15px; }
+.login-card {
+  background: var(--surface); border-radius: var(--radius-lg); padding: 32px 24px;
+  box-shadow: var(--shadow-lg); width: 100%; max-width: 360px;
+}
+.login-card h3 { font-size: 18px; margin-bottom: 16px; }
+.login-input {
+  width: 100%; padding: 12px 16px; font-size: 16px; font-family: var(--font-hindi);
+  border: 2px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s;
+}
+.login-input:focus { border-color: var(--accent); }
+.avatar-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+  margin: 16px 0;
+}
+.avatar-option {
+  width: 48px; height: 48px; font-size: 28px; border-radius: 50%;
+  border: 2px solid var(--border); background: var(--surface);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.avatar-option:hover { border-color: var(--accent); transform: scale(1.1); }
+.avatar-option.selected { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 3px var(--accent-light); }
+.profile-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.profile-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; transition: all 0.2s;
+}
+.profile-item:hover { border-color: var(--accent); background: var(--accent-light); }
+.profile-item .pi-avatar { font-size: 28px; }
+.profile-item .pi-info { flex: 1; text-align: left; }
+.profile-item .pi-name { font-weight: 600; font-size: 16px; }
+.profile-item .pi-stats { font-size: 12px; color: var(--text-secondary); }
+.profile-item .pi-delete {
+  font-size: 16px; color: var(--text-secondary); background: none; border: none;
+  cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: all 0.2s;
+}
+.profile-item .pi-delete:hover { color: var(--red); background: var(--red-light); }
+.login-divider {
+  display: flex; align-items: center; gap: 12px; margin: 20px 0;
+  color: var(--text-secondary); font-size: 13px;
+}
+.login-divider::before, .login-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.profile-header {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 4px 0; margin-left: 4px;
+}
+.profile-header .ph-avatar { font-size: 22px; }
+.profile-header .ph-name { font-size: 14px; font-weight: 600; }
+
+/* Hearts out overlay */
+.hearts-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 500; display: none;
+}
+.hearts-overlay.show { display: flex; }
+.hearts-modal {
+  background: var(--surface); border-radius: var(--radius-lg); padding: 32px;
+  text-align: center; max-width: 320px; box-shadow: var(--shadow-lg);
+}
+.hearts-modal h3 { font-size: 20px; margin: 12px 0 8px; }
+.hearts-modal p { color: var(--text-secondary); margin-bottom: 20px; }
+
+@media (max-width: 768px) {
+  .word-display { font-size: 28px; }
+  .flashcard { min-height: 240px; padding: 24px 16px; }
+  .match-area { gap: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<section id="loginScreen" class="screen active">
+  <div class="login-screen">
+    <div style="font-size:64px; margin-bottom:8px;">🇮🇳</div>
+    <div class="login-title">KannadaEasy</div>
+    <div class="login-subtitle">हिंदी बोलने वालों के लिए कन्नड सीखें</div>
+    <div class="login-card">
+      <div id="existingProfiles"></div>
+      <div id="newProfileSection">
+        <h3>नया प्रोफ़ाइल बनाओ</h3>
+        <input class="login-input" id="profileNameInput" placeholder="अपना नाम लिखो..." maxlength="20" onkeydown="if(event.key==='Enter')createProfile()">
+        <div style="margin-top:12px; font-size:14px; color:var(--text-secondary);">अपना अवतार चुनो:</div>
+        <div class="avatar-grid" id="avatarGrid"></div>
+        <button class="continue-btn" id="createProfileBtn" onclick="createProfile()">शुरू करो →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOME SCREEN -->
+<section id="homeScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-stats">
+      <div class="profile-header" onclick="showScreen('loginScreen')" title="प्रोफ़ाइल बदलो">
+        <span class="ph-avatar" id="homeAvatar">👤</span>
+        <span class="ph-name" id="homeName">User</span>
+      </div>
+      <span class="stat stat-fire">🔥 <span id="homeStreak">0</span></span>
+      <span class="stat stat-xp">⚡ <span id="homeXP">0</span></span>
+      <span class="stat stat-heart">❤️ <span id="homeHearts">5</span></span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" onclick="toggleTheme()" title="Theme">🌙</button>
+    </div>
+  </div>
+  <div class="home-header">
+    <h1>KannadaEasy</h1>
+    <p>हिंदी बोलने वालों के लिए कन्नड सीखें</p>
+  </div>
+  <div class="daily-goal">
+    <div style="font-size:14px; font-weight:600;">आज का लक्ष्य: <span id="goalProgress">0</span>/<span id="goalTarget">20</span> XP</div>
+    <div class="goal-bar"><div class="goal-fill" id="goalFill" style="width:0%"></div></div>
+  </div>
+  <div class="skill-tree" id="skillTree"></div>
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showScreen('homeScreen')"><span class="nav-icon">🏠</span>सीखो</button>
+    <button class="nav-item" onclick="showScreen('reviewScreen')"><span class="nav-icon">🔄</span>दोहराओ</button>
+    <button class="nav-item" onclick="showScreen('statsScreen')"><span class="nav-icon">📊</span>प्रगति</button>
+  </nav>
+</section>
+
+<!-- LESSON SCREEN -->
+<section id="lessonScreen" class="screen">
+  <div class="lesson-topbar">
+    <button class="lesson-close" onclick="exitLesson()">✕</button>
+    <div class="progress-bar"><div class="progress-fill" id="lessonProgress" style="width:0%"></div></div>
+    <div class="lesson-hearts" id="lessonHearts"></div>
+  </div>
+  <div class="lesson-content" id="lessonContent"></div>
+  <div class="feedback-bar" id="feedbackBar">
+    <span id="feedbackText"></span>
+    <button class="fb-btn" onclick="nextQuestion()">आगे बढ़ो</button>
+  </div>
+</section>
+
+<!-- LESSON COMPLETE -->
+<section id="completeScreen" class="screen">
+  <div class="complete-screen">
+    <div class="complete-icon anim-bounce">🎉</div>
+    <div class="complete-title">शाबाश!</div>
+    <p style="color:var(--text-secondary); margin-top:8px;" id="completeLesson"></p>
+    <div class="complete-stats">
+      <div class="complete-stat"><div class="val" id="completeXP">0</div><div class="lbl">XP अर्जित</div></div>
+      <div class="complete-stat"><div class="val" id="completeAcc">0%</div><div class="lbl">सटीकता</div></div>
+      <div class="complete-stat"><div class="val" id="completeStreak">0</div><div class="lbl">🔥 स्ट्रीक</div></div>
+    </div>
+    <button class="continue-btn" onclick="showScreen('homeScreen')" style="max-width:300px;">जारी रखें</button>
+  </div>
+</section>
+
+<!-- REVIEW SCREEN -->
+<section id="reviewScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-stats">
+      <span class="stat stat-fire">🔥 <span id="revStreak">0</span></span>
+      <span class="stat stat-xp">⚡ <span id="revXP">0</span></span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="review-header"><h2>🔄 दोहराई</h2><p style="color:var(--text-secondary)">कमज़ोर शब्दों की प्रैक्टिस करो</p></div>
+  <div id="reviewContent"></div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="showScreen('homeScreen')"><span class="nav-icon">🏠</span>सीखो</button>
+    <button class="nav-item active" onclick="showScreen('reviewScreen')"><span class="nav-icon">🔄</span>दोहराओ</button>
+    <button class="nav-item" onclick="showScreen('statsScreen')"><span class="nav-icon">📊</span>प्रगति</button>
+  </nav>
+</section>
+
+<!-- STATS SCREEN -->
+<section id="statsScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-stats">
+      <span class="stat stat-fire">🔥 <span id="statStreak">0</span></span>
+      <span class="stat stat-xp">⚡ <span id="statXP">0</span></span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="stats-header"><h2>📊 मेरी प्रगति</h2></div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="showScreen('homeScreen')"><span class="nav-icon">🏠</span>सीखो</button>
+    <button class="nav-item" onclick="showScreen('reviewScreen')"><span class="nav-icon">🔄</span>दोहराओ</button>
+    <button class="nav-item active" onclick="showScreen('statsScreen')"><span class="nav-icon">📊</span>प्रगति</button>
+  </nav>
+</section>
+
+<!-- Hearts Out Overlay -->
+<div class="hearts-overlay" id="heartsOverlay">
+  <div class="hearts-modal">
+    <div style="font-size:48px">💔</div>
+    <h3>दिल ख़त्म हो गए!</h3>
+    <p>दोहराई करो या थोड़ी देर बाद आओ।<br>दिल हर 30 मिनट में वापस आते हैं।</p>
+    <button class="continue-btn" onclick="closeHeartsOverlay()" style="max-width:260px;">ठीक है</button>
+  </div>
+</div>
+
+<script>
+// ====================== LESSON DATA ======================
+const LESSONS = [
+  {
+    id: 1, title: "अभिवादन", titleEn: "Greetings", icon: "🙏", isBonus: false,
+    words: [
+      { id:"w1_1", kd:"नमस्कार", ks:"ನಮಸ್ಕಾರ", tr:"namaskāra", hi:"नमस्ते / हैलो", en:"Hello", img:"🙏", imgType:"emoji" },
+      { id:"w1_2", kd:"हेगिद्दीरि?", ks:"ಹೇಗಿದ್ದೀರಿ?", tr:"hēgiddīri?", hi:"कैसे हैं? (आदरसूचक)", en:"How are you?", img:"🤝", imgType:"emoji" },
+      { id:"w1_3", kd:"चेन्नागिद्दीने", ks:"ಚೆನ್ನಾಗಿದ್ದೇನೆ", tr:"cennāgiddēne", hi:"मैं अच्छा/अच्छी हूँ", en:"I am fine", img:"😊", imgType:"emoji" },
+      { id:"w1_4", kd:"हौदु", ks:"ಹೌದು", tr:"haudu", hi:"हाँ", en:"Yes", img:"✅", imgType:"emoji" },
+      { id:"w1_5", kd:"इल्ल", ks:"ಇಲ್ಲ", tr:"illa", hi:"नहीं", en:"No", img:"❌", imgType:"emoji" },
+      { id:"w1_6", kd:"धन्यवाद", ks:"ಧನ್ಯವಾದ", tr:"dhanyavāda", hi:"शुक्रिया", en:"Thank you", img:"🙏", imgType:"emoji" },
+      { id:"w1_7", kd:"दयविट्टु", ks:"ದಯವಿಟ್ಟು", tr:"dayaviṭṭu", hi:"कृपया / प्लीज़", en:"Please", img:"🙂", imgType:"emoji" },
+      { id:"w1_8", kd:"नन्न हेसरु", ks:"ನನ್ನ ಹೆಸರು", tr:"nanna hesaru", hi:"मेरा नाम", en:"My name is", img:"📛", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 2, title: "गिनती", titleEn: "Numbers 1-10", icon: "🔢", isBonus: false,
+    words: [
+      { id:"w2_1", kd:"ओंदु", ks:"ಒಂದು", tr:"ondu", hi:"एक (1)", en:"One", img:"1️⃣", imgType:"emoji" },
+      { id:"w2_2", kd:"एरडु", ks:"ಎರಡು", tr:"eraḍu", hi:"दो (2)", en:"Two", img:"2️⃣", imgType:"emoji" },
+      { id:"w2_3", kd:"मूरु", ks:"ಮೂರು", tr:"mūru", hi:"तीन (3)", en:"Three", img:"3️⃣", imgType:"emoji" },
+      { id:"w2_4", kd:"नाल्कु", ks:"ನಾಲ್ಕು", tr:"nālku", hi:"चार (4)", en:"Four", img:"4️⃣", imgType:"emoji" },
+      { id:"w2_5", kd:"ऐदु", ks:"ಐದು", tr:"aidu", hi:"पाँच (5)", en:"Five", img:"5️⃣", imgType:"emoji" },
+      { id:"w2_6", kd:"आरु", ks:"ಆರು", tr:"āru", hi:"छह (6)", en:"Six", img:"6️⃣", imgType:"emoji" },
+      { id:"w2_7", kd:"एळु", ks:"ಏಳು", tr:"ēḷu", hi:"सात (7)", en:"Seven", img:"7️⃣", imgType:"emoji" },
+      { id:"w2_8", kd:"एंटु", ks:"ಎಂಟು", tr:"eṇṭu", hi:"आठ (8)", en:"Eight", img:"8️⃣", imgType:"emoji" },
+      { id:"w2_9", kd:"ओंबत्तु", ks:"ಒಂಬತ್ತು", tr:"ombattu", hi:"नौ (9)", en:"Nine", img:"9️⃣", imgType:"emoji" },
+      { id:"w2_10", kd:"हत्तु", ks:"ಹತ್ತು", tr:"hattu", hi:"दस (10)", en:"Ten", img:"🔟", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 3, title: "रोज़मर्रा की चीज़ें", titleEn: "Everyday Things", icon: "🏠", isBonus: false,
+    words: [
+      { id:"w3_1", kd:"मने", ks:"ಮನೆ", tr:"mane", hi:"घर", en:"House", img:"🏠", imgType:"emoji" },
+      { id:"w3_2", kd:"नीरु", ks:"ನೀರು", tr:"nīru", hi:"पानी", en:"Water", img:"💧", imgType:"emoji" },
+      { id:"w3_3", kd:"पुस्तक", ks:"ಪುಸ್ತಕ", tr:"pustaka", hi:"किताब", en:"Book", img:"📚", imgType:"emoji" },
+      { id:"w3_4", kd:"केलस", ks:"ಕೆಲಸ", tr:"kelasa", hi:"काम / नौकरी", en:"Work", img:"💼", imgType:"emoji" },
+      { id:"w3_5", kd:"ऊरु", ks:"ಊರು", tr:"ūru", hi:"गाँव / शहर", en:"Town", img:"🏘️", imgType:"emoji" },
+      { id:"w3_6", kd:"गाडि", ks:"ಗಾಡಿ", tr:"gāḍi", hi:"गाड़ी", en:"Vehicle", img:"🚗", imgType:"emoji" },
+      { id:"w3_7", kd:"हण", ks:"ಹಣ", tr:"haṇa", hi:"पैसा", en:"Money", img:"💰", imgType:"emoji" },
+      { id:"w3_8", kd:"बट्टे", ks:"ಬಟ್ಟೆ", tr:"baṭṭe", hi:"कपड़े", en:"Clothes", img:"👕", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 4, title: "रंग और विशेषण", titleEn: "Colors & Adjectives", icon: "🎨", isBonus: false,
+    words: [
+      { id:"w4_1", kd:"केंपु", ks:"ಕೆಂಪು", tr:"kempu", hi:"लाल", en:"Red", img:"🔴", imgType:"emoji" },
+      { id:"w4_2", kd:"नीलि", ks:"ನೀಲಿ", tr:"nīli", hi:"नीला", en:"Blue", img:"🔵", imgType:"emoji" },
+      { id:"w4_3", kd:"बिळि", ks:"ಬಿಳಿ", tr:"biḷi", hi:"सफ़ेद", en:"White", img:"⚪", imgType:"emoji" },
+      { id:"w4_4", kd:"कप्पु", ks:"ಕಪ್ಪು", tr:"kappu", hi:"काला", en:"Black", img:"⚫", imgType:"emoji" },
+      { id:"w4_5", kd:"हसिरु", ks:"ಹಸಿರು", tr:"hasiru", hi:"हरा", en:"Green", img:"🟢", imgType:"emoji" },
+      { id:"w4_6", kd:"दोड्ड", ks:"ದೊಡ್ಡ", tr:"doḍḍa", hi:"बड़ा", en:"Big", img:"🐘", imgType:"emoji" },
+      { id:"w4_7", kd:"चिक्क", ks:"ಚಿಕ್ಕ", tr:"cikka", hi:"छोटा", en:"Small", img:"🐜", imgType:"emoji" },
+      { id:"w4_8", kd:"ओळ्ळेय", ks:"ಒಳ್ಳೆಯ", tr:"oḷḷeya", hi:"अच्छा", en:"Good", img:"👍", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 5, title: "खाना-पीना", titleEn: "Food & Drink", icon: "🍚", isBonus: false,
+    words: [
+      { id:"w5_1", kd:"अन्न", ks:"ಅನ್ನ", tr:"anna", hi:"चावल / भात", en:"Rice", img:"🍚", imgType:"emoji" },
+      { id:"w5_2", kd:"रोट्टि", ks:"ರೊಟ್ಟಿ", tr:"roṭṭi", hi:"रोटी", en:"Bread", img:"🫓", imgType:"emoji" },
+      { id:"w5_3", kd:"हालु", ks:"ಹಾಲು", tr:"hālu", hi:"दूध", en:"Milk", img:"🥛", imgType:"emoji" },
+      { id:"w5_4", kd:"चहा", ks:"ಚಹಾ", tr:"cahā", hi:"चाय", en:"Tea", img:"☕", imgType:"emoji" },
+      { id:"w5_5", kd:"हण्णु", ks:"ಹಣ್ಣು", tr:"haṇṇu", hi:"फल", en:"Fruit", img:"🍎", imgType:"emoji" },
+      { id:"w5_6", kd:"तरकारि", ks:"ತರಕಾರಿ", tr:"tarakāri", hi:"सब्ज़ी", en:"Vegetable", img:"🥦", imgType:"emoji" },
+      { id:"w5_7", kd:"मोसरु", ks:"ಮೊಸರು", tr:"mosaru", hi:"दही", en:"Curd", img:"🥣", imgType:"emoji" },
+      { id:"w5_8", kd:"उप्पु", ks:"ಉಪ್ಪು", tr:"uppu", hi:"नमक", en:"Salt", img:"🧂", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 6, title: "परिवार", titleEn: "Family", icon: "👨‍👩‍👧", isBonus: false,
+    words: [
+      { id:"w6_1", kd:"अम्म", ks:"ಅಮ್ಮ", tr:"amma", hi:"माँ", en:"Mother", img:"👩", imgType:"emoji" },
+      { id:"w6_2", kd:"अप्प", ks:"ಅಪ್ಪ", tr:"appa", hi:"पापा / पिताजी", en:"Father", img:"👨", imgType:"emoji" },
+      { id:"w6_3", kd:"अण्ण", ks:"ಅಣ್ಣ", tr:"aṇṇa", hi:"बड़ा भाई", en:"Elder brother", img:"🧑", imgType:"emoji" },
+      { id:"w6_4", kd:"अक्क", ks:"ಅಕ್ಕ", tr:"akka", hi:"बड़ी बहन", en:"Elder sister", img:"👩", imgType:"emoji" },
+      { id:"w6_5", kd:"तम्म", ks:"ತಮ್ಮ", tr:"tamma", hi:"छोटा भाई", en:"Younger brother", img:"👦", imgType:"emoji" },
+      { id:"w6_6", kd:"तंगि", ks:"ತಂಗಿ", tr:"tangi", hi:"छोटी बहन", en:"Younger sister", img:"👧", imgType:"emoji" },
+      { id:"w6_7", kd:"मगु", ks:"ಮಗು", tr:"magu", hi:"बच्चा", en:"Child", img:"👶", imgType:"emoji" },
+      { id:"w6_8", kd:"कुटुंब", ks:"ಕುಟುಂಬ", tr:"kuṭumba", hi:"परिवार", en:"Family", img:"👨‍👩‍👧‍👦", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 7, title: "शरीर", titleEn: "Body Parts", icon: "🖐️", isBonus: false,
+    words: [
+      { id:"w7_1", kd:"तले", ks:"ತಲೆ", tr:"tale", hi:"सिर", en:"Head", img:"🧠", imgType:"emoji" },
+      { id:"w7_2", kd:"कै", ks:"ಕೈ", tr:"kai", hi:"हाथ", en:"Hand", img:"🖐️", imgType:"emoji" },
+      { id:"w7_3", kd:"कालु", ks:"ಕಾಲು", tr:"kālu", hi:"पैर", en:"Leg/Foot", img:"🦶", imgType:"emoji" },
+      { id:"w7_4", kd:"कण्णु", ks:"ಕಣ್ಣು", tr:"kaṇṇu", hi:"आँख", en:"Eye", img:"👁️", imgType:"emoji" },
+      { id:"w7_5", kd:"बायि", ks:"ಬಾಯಿ", tr:"bāyi", hi:"मुँह", en:"Mouth", img:"👄", imgType:"emoji" },
+      { id:"w7_6", kd:"मूगु", ks:"ಮೂಗು", tr:"mūgu", hi:"नाक", en:"Nose", img:"👃", imgType:"emoji" },
+      { id:"w7_7", kd:"किवि", ks:"ಕಿವಿ", tr:"kivi", hi:"कान", en:"Ear", img:"👂", imgType:"emoji" },
+      { id:"w7_8", kd:"हल्लु", ks:"ಹಲ್ಲು", tr:"hallu", hi:"दाँत", en:"Tooth", img:"🦷", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 8, title: "क्रियाएं (वर्तमान)", titleEn: "Verbs: Present", icon: "🏃", isBonus: false,
+    words: [
+      { id:"w8_1", kd:"माडु", ks:"ಮಾಡು", tr:"māḍu", hi:"करना", en:"To do", img:"✊", imgType:"emoji" },
+      { id:"w8_2", kd:"होगु", ks:"ಹೋಗು", tr:"hōgu", hi:"जाना", en:"To go", img:"🚶", imgType:"emoji" },
+      { id:"w8_3", kd:"बा", ks:"ಬಾ", tr:"bā", hi:"आना", en:"To come", img:"🙋", imgType:"emoji" },
+      { id:"w8_4", kd:"तिन्नु", ks:"ತಿನ್ನು", tr:"tinnu", hi:"खाना", en:"To eat", img:"🍽️", imgType:"emoji" },
+      { id:"w8_5", kd:"कुडि", ks:"ಕುಡಿ", tr:"kuḍi", hi:"पीना", en:"To drink", img:"🥤", imgType:"emoji" },
+      { id:"w8_6", kd:"नोडु", ks:"ನೋಡು", tr:"nōḍu", hi:"देखना", en:"To see", img:"👀", imgType:"emoji" },
+      { id:"w8_7", kd:"हेळु", ks:"ಹೇಳು", tr:"hēḷu", hi:"बोलना / कहना", en:"To say", img:"🗣️", imgType:"emoji" },
+      { id:"w8_8", kd:"केळु", ks:"ಕೇಳು", tr:"kēḷu", hi:"सुनना / पूछना", en:"To listen/ask", img:"👂", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 9, title: "जगहें और दिशाएं", titleEn: "Places & Directions", icon: "📍", isBonus: false,
+    words: [
+      { id:"w9_1", kd:"ओळगे", ks:"ಒಳಗೆ", tr:"oḷage", hi:"अंदर", en:"Inside", img:"⬅️", imgType:"emoji" },
+      { id:"w9_2", kd:"होरगे", ks:"ಹೊರಗೆ", tr:"horage", hi:"बाहर", en:"Outside", img:"➡️", imgType:"emoji" },
+      { id:"w9_3", kd:"मेले", ks:"ಮೇಲೆ", tr:"mēle", hi:"ऊपर", en:"Above/Up", img:"⬆️", imgType:"emoji" },
+      { id:"w9_4", kd:"केळगे", ks:"ಕೆಳಗೆ", tr:"keḷage", hi:"नीचे", en:"Below/Down", img:"⬇️", imgType:"emoji" },
+      { id:"w9_5", kd:"हत्तिर", ks:"ಹತ್ತಿರ", tr:"hattira", hi:"पास / नज़दीक", en:"Near", img:"📍", imgType:"emoji" },
+      { id:"w9_6", kd:"दूर", ks:"ದೂರ", tr:"dūra", hi:"दूर", en:"Far", img:"🏔️", imgType:"emoji" },
+      { id:"w9_7", kd:"अंगडि", ks:"ಅಂಗಡಿ", tr:"angaḍi", hi:"दुकान", en:"Shop", img:"🏪", imgType:"emoji" },
+      { id:"w9_8", kd:"शाले", ks:"ಶಾಲೆ", tr:"śāle", hi:"स्कूल", en:"School", img:"🏫", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 10, title: "समय और दिन", titleEn: "Time & Days", icon: "📅", isBonus: false,
+    words: [
+      { id:"w10_1", kd:"इंदु", ks:"ಇಂದು", tr:"indu", hi:"आज", en:"Today", img:"📅", imgType:"emoji" },
+      { id:"w10_2", kd:"नाळे", ks:"ನಾಳೆ", tr:"nāḷe", hi:"कल (आने वाला)", en:"Tomorrow", img:"⏭️", imgType:"emoji" },
+      { id:"w10_3", kd:"निन्ने", ks:"ನಿನ್ನೆ", tr:"ninne", hi:"कल (बीता हुआ)", en:"Yesterday", img:"⏮️", imgType:"emoji" },
+      { id:"w10_4", kd:"बेळिग्गे", ks:"ಬೆಳಿಗ್ಗೆ", tr:"beḷigge", hi:"सुबह", en:"Morning", img:"🌅", imgType:"emoji" },
+      { id:"w10_5", kd:"मध्याह्न", ks:"ಮಧ್ಯಾಹ್ನ", tr:"madhyāhna", hi:"दोपहर", en:"Afternoon", img:"☀️", imgType:"emoji" },
+      { id:"w10_6", kd:"सांजे", ks:"ಸಂಜೆ", tr:"sānje", hi:"शाम", en:"Evening", img:"🌇", imgType:"emoji" },
+      { id:"w10_7", kd:"रात्रि", ks:"ರಾತ್ರಿ", tr:"rātri", hi:"रात", en:"Night", img:"🌙", imgType:"emoji" },
+      { id:"w10_8", kd:"घंटे", ks:"ಘಂಟೆ", tr:"ghaṇṭe", hi:"घंटा", en:"Hour", img:"🕐", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 11, title: "खरीदारी", titleEn: "Shopping", icon: "🛒", isBonus: false,
+    words: [
+      { id:"w11_1", kd:"बेले", ks:"ಬೆಲೆ", tr:"bele", hi:"कीमत / दाम", en:"Price", img:"💲", imgType:"emoji" },
+      { id:"w11_2", kd:"रूपायि", ks:"ರೂಪಾಯಿ", tr:"rūpāyi", hi:"रुपया", en:"Rupee", img:"💰", imgType:"emoji" },
+      { id:"w11_3", kd:"कॊळ्ळि", ks:"ಕೊಳ್ಳಿ", tr:"koḷḷi", hi:"ख़रीदो", en:"Buy", img:"🛒", imgType:"emoji" },
+      { id:"w11_4", kd:"महग", ks:"ಮಹಗ", tr:"mahaga", hi:"महँगा", en:"Expensive", img:"💎", imgType:"emoji" },
+      { id:"w11_5", kd:"अगग", ks:"ಅಗಗ", tr:"agaga", hi:"सस्ता", en:"Cheap", img:"🏷️", imgType:"emoji" },
+      { id:"w11_6", kd:"बेकु", ks:"ಬೇಕು", tr:"bēku", hi:"चाहिए", en:"Want/Need", img:"🙋", imgType:"emoji" },
+      { id:"w11_7", kd:"बेडा", ks:"ಬೇಡ", tr:"bēḍā", hi:"नहीं चाहिए", en:"Don't want", img:"🙅", imgType:"emoji" },
+      { id:"w11_8", kd:"कॊडि", ks:"ಕೊಡಿ", tr:"koḍi", hi:"दो / दीजिए", en:"Give", img:"🤲", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 12, title: "क्रियाएं (भूतकाल)", titleEn: "Verbs: Past", icon: "⏪", isBonus: false,
+    words: [
+      { id:"w12_1", kd:"माडिदे", ks:"ಮಾಡಿದೆ", tr:"māḍide", hi:"(मैंने) किया", en:"I did", img:"✅", imgType:"emoji" },
+      { id:"w12_2", kd:"होदे", ks:"ಹೋದೆ", tr:"hōde", hi:"(मैं) गया/गई", en:"I went", img:"🚶", imgType:"emoji" },
+      { id:"w12_3", kd:"बंदे", ks:"ಬಂದೆ", tr:"bande", hi:"(मैं) आया/आई", en:"I came", img:"🙋", imgType:"emoji" },
+      { id:"w12_4", kd:"तिंदे", ks:"ತಿಂದೆ", tr:"tinde", hi:"(मैंने) खाया", en:"I ate", img:"🍽️", imgType:"emoji" },
+      { id:"w12_5", kd:"कुडिदे", ks:"ಕುಡಿದೆ", tr:"kuḍide", hi:"(मैंने) पिया", en:"I drank", img:"🥤", imgType:"emoji" },
+      { id:"w12_6", kd:"नोडिदे", ks:"ನೋಡಿದೆ", tr:"nōḍide", hi:"(मैंने) देखा", en:"I saw", img:"👀", imgType:"emoji" },
+      { id:"w12_7", kd:"हेळिदे", ks:"ಹೇಳಿದೆ", tr:"hēḷide", hi:"(मैंने) कहा", en:"I said", img:"🗣️", imgType:"emoji" },
+      { id:"w12_8", kd:"केळिदे", ks:"ಕೇಳಿದೆ", tr:"kēḷide", hi:"(मैंने) सुना/पूछा", en:"I heard/asked", img:"👂", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 13, title: "मौसम और प्रकृति", titleEn: "Weather & Nature", icon: "🌧️", isBonus: false,
+    words: [
+      { id:"w13_1", kd:"मळे", ks:"ಮಳೆ", tr:"maḷe", hi:"बारिश", en:"Rain", img:"🌧️", imgType:"emoji" },
+      { id:"w13_2", kd:"बिसिलु", ks:"ಬಿಸಿಲು", tr:"bisilu", hi:"धूप / गर्मी", en:"Sunshine/Heat", img:"☀️", imgType:"emoji" },
+      { id:"w13_3", kd:"गालि", ks:"ಗಾಳಿ", tr:"gāli", hi:"हवा", en:"Wind", img:"💨", imgType:"emoji" },
+      { id:"w13_4", kd:"मर", ks:"ಮರ", tr:"mara", hi:"पेड़", en:"Tree", img:"🌳", imgType:"emoji" },
+      { id:"w13_5", kd:"हूवु", ks:"ಹೂವು", tr:"hūvu", hi:"फूल", en:"Flower", img:"🌸", imgType:"emoji" },
+      { id:"w13_6", kd:"नदि", ks:"ನದಿ", tr:"nadi", hi:"नदी", en:"River", img:"🏞️", imgType:"emoji" },
+      { id:"w13_7", kd:"बेट्ट", ks:"ಬೆಟ್ಟ", tr:"beṭṭa", hi:"पहाड़", en:"Mountain", img:"⛰️", imgType:"emoji" },
+      { id:"w13_8", kd:"आकाश", ks:"ಆಕಾಶ", tr:"ākāśa", hi:"आसमान", en:"Sky", img:"🌤️", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 14, title: "भावनाएं", titleEn: "Emotions", icon: "😊", isBonus: false,
+    words: [
+      { id:"w14_1", kd:"संतोष", ks:"ಸಂತೋಷ", tr:"santoṣa", hi:"ख़ुशी", en:"Happiness", img:"😊", imgType:"emoji" },
+      { id:"w14_2", kd:"दुःख", ks:"ದುಃಖ", tr:"duḥkha", hi:"दुख / उदासी", en:"Sadness", img:"😢", imgType:"emoji" },
+      { id:"w14_3", kd:"भय", ks:"ಭಯ", tr:"bhaya", hi:"डर", en:"Fear", img:"😨", imgType:"emoji" },
+      { id:"w14_4", kd:"प्रीति", ks:"ಪ್ರೀತಿ", tr:"prīti", hi:"प्यार", en:"Love", img:"❤️", imgType:"emoji" },
+      { id:"w14_5", kd:"कोप", ks:"ಕೋಪ", tr:"kōpa", hi:"गुस्सा", en:"Anger", img:"😠", imgType:"emoji" },
+      { id:"w14_6", kd:"आश्चर्य", ks:"ಆಶ್ಚರ್ಯ", tr:"āścarya", hi:"हैरानी", en:"Surprise", img:"😲", imgType:"emoji" },
+      { id:"w14_7", kd:"नगु", ks:"ನಗು", tr:"nagu", hi:"हँसना", en:"Laugh", img:"😂", imgType:"emoji" },
+      { id:"w14_8", kd:"अळु", ks:"ಅಳು", tr:"aḷu", hi:"रोना", en:"Cry", img:"😭", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 15, title: "वाक्य बनाना", titleEn: "Sentence Building", icon: "📝", isBonus: false,
+    words: [
+      { id:"w15_1", kd:"नानु", ks:"ನಾನು", tr:"nānu", hi:"मैं", en:"I", img:"🙋", imgType:"emoji" },
+      { id:"w15_2", kd:"नीनु", ks:"ನೀನು", tr:"nīnu", hi:"तू / तुम", en:"You (informal)", img:"👉", imgType:"emoji" },
+      { id:"w15_3", kd:"नीवु", ks:"ನೀವು", tr:"nīvu", hi:"आप (आदरसूचक)", en:"You (formal)", img:"🤝", imgType:"emoji" },
+      { id:"w15_4", kd:"अवनु", ks:"ಅವನು", tr:"avanu", hi:"वो (लड़का/आदमी)", en:"He", img:"👨", imgType:"emoji" },
+      { id:"w15_5", kd:"अवळु", ks:"ಅವಳು", tr:"avaḷu", hi:"वो (लड़की/औरत)", en:"She", img:"👩", imgType:"emoji" },
+      { id:"w15_6", kd:"नम्म", ks:"ನಮ್ಮ", tr:"namma", hi:"हमारा", en:"Our", img:"👥", imgType:"emoji" },
+      { id:"w15_7", kd:"इदु", ks:"ಇದು", tr:"idu", hi:"यह", en:"This", img:"👆", imgType:"emoji" },
+      { id:"w15_8", kd:"अदु", ks:"ಅದು", tr:"adu", hi:"वह", en:"That", img:"👇", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 16, title: "बातचीत के वाक्य", titleEn: "Conversation", icon: "🗣️", isBonus: false,
+    words: [
+      { id:"w16_1", kd:"एष्टु?", ks:"ಎಷ್ಟು?", tr:"eṣṭu?", hi:"कितना?", en:"How much?", img:"🤔", imgType:"emoji" },
+      { id:"w16_2", kd:"एल्लि?", ks:"ಎಲ್ಲಿ?", tr:"elli?", hi:"कहाँ?", en:"Where?", img:"📍", imgType:"emoji" },
+      { id:"w16_3", kd:"यावाग?", ks:"ಯಾವಾಗ?", tr:"yāvāga?", hi:"कब?", en:"When?", img:"🕐", imgType:"emoji" },
+      { id:"w16_4", kd:"यारु?", ks:"ಯಾರು?", tr:"yāru?", hi:"कौन?", en:"Who?", img:"🧐", imgType:"emoji" },
+      { id:"w16_5", kd:"याके?", ks:"ಯಾಕೆ?", tr:"yāke?", hi:"क्यों?", en:"Why?", img:"❓", imgType:"emoji" },
+      { id:"w16_6", kd:"गोत्तिल्ल", ks:"ಗೊತ್ತಿಲ್ಲ", tr:"gottilla", hi:"मुझे नहीं पता", en:"I don't know", img:"🤷", imgType:"emoji" },
+      { id:"w16_7", kd:"गोत्तु", ks:"ಗೊತ್ತು", tr:"gottu", hi:"मुझे पता है", en:"I know", img:"💡", imgType:"emoji" },
+      { id:"w16_8", kd:"सहाय माडि", ks:"ಸಹಾಯ ಮಾಡಿ", tr:"sahāya māḍi", hi:"मदद कीजिए", en:"Please help", img:"🆘", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 17, title: "रोज़ाना के वाक्य", titleEn: "Daily Phrases", icon: "💬", isBonus: false,
+    words: [
+      { id:"w17_1", kd:"शुभ दिन", ks:"ಶುಭ ದಿನ", tr:"śubha dina", hi:"शुभ दिन", en:"Good day", img:"🌞", imgType:"emoji" },
+      { id:"w17_2", kd:"ओळ्ळेय रात्रि", ks:"ಒಳ್ಳೆಯ ರಾತ್ರಿ", tr:"oḷḷeya rātri", hi:"शुभ रात्रि", en:"Good night", img:"🌙", imgType:"emoji" },
+      { id:"w17_3", kd:"क्षमिसि", ks:"ಕ್ಷಮಿಸಿ", tr:"kṣamisi", hi:"माफ़ कीजिए", en:"Sorry/Excuse me", img:"🙇", imgType:"emoji" },
+      { id:"w17_4", kd:"पर्वागिल्ल", ks:"ಪರ್ವಾಗಿಲ್ಲ", tr:"parvāgilla", hi:"कोई बात नहीं", en:"No problem", img:"👌", imgType:"emoji" },
+      { id:"w17_5", kd:"ननगे अर्थ आगिल्ल", ks:"ನನಗೆ ಅರ್ಥ ಆಗಿಲ್ಲ", tr:"nanage artha āgilla", hi:"मुझे समझ नहीं आया", en:"I don't understand", img:"😕", imgType:"emoji" },
+      { id:"w17_6", kd:"निधानवागि हेळि", ks:"ನಿಧಾನವಾಗಿ ಹೇಳಿ", tr:"nidhānavāgi hēḷi", hi:"धीरे बोलिए", en:"Speak slowly", img:"🐢", imgType:"emoji" },
+      { id:"w17_7", kd:"बरत्तीनि", ks:"ಬರುತ್ತೀನಿ", tr:"barattīni", hi:"मैं आऊँगा/आऊँगी", en:"I will come", img:"🚶", imgType:"emoji" },
+      { id:"w17_8", kd:"होगि बरत्तीनि", ks:"ಹೋಗಿ ಬರುತ್ತೀನಿ", tr:"hōgi barattīni", hi:"जाकर आता/आती हूँ (अलविदा)", en:"Goodbye (lit. I'll go and come)", img:"👋", imgType:"emoji" }
+    ]
+  },
+  // Bonus lessons
+  {
+    id: 18, title: "कन्नड लिपि: स्वर", titleEn: "Kannada Script: Vowels", icon: "ಅ", isBonus: true,
+    words: [
+      { id:"w18_1", kd:"ಅ", ks:"ಅ", tr:"a", hi:"अ", en:"a", img:"ಅ", imgType:"emoji" },
+      { id:"w18_2", kd:"ಆ", ks:"ಆ", tr:"ā", hi:"आ", en:"ā", img:"ಆ", imgType:"emoji" },
+      { id:"w18_3", kd:"ಇ", ks:"ಇ", tr:"i", hi:"इ", en:"i", img:"ಇ", imgType:"emoji" },
+      { id:"w18_4", kd:"ಈ", ks:"ಈ", tr:"ī", hi:"ई", en:"ī", img:"ಈ", imgType:"emoji" },
+      { id:"w18_5", kd:"ಉ", ks:"ಉ", tr:"u", hi:"उ", en:"u", img:"ಉ", imgType:"emoji" },
+      { id:"w18_6", kd:"ಊ", ks:"ಊ", tr:"ū", hi:"ऊ", en:"ū", img:"ಊ", imgType:"emoji" },
+      { id:"w18_7", kd:"ಎ", ks:"ಎ", tr:"e", hi:"ए", en:"e", img:"ಎ", imgType:"emoji" },
+      { id:"w18_8", kd:"ಏ", ks:"ಏ", tr:"ē", hi:"ऐ", en:"ē", img:"ಏ", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 19, title: "कन्नड लिपि: व्यंजन 1", titleEn: "Kannada Script: Consonants 1", icon: "ಕ", isBonus: true,
+    words: [
+      { id:"w19_1", kd:"ಕ", ks:"ಕ", tr:"ka", hi:"क", en:"ka", img:"ಕ", imgType:"emoji" },
+      { id:"w19_2", kd:"ಗ", ks:"ಗ", tr:"ga", hi:"ग", en:"ga", img:"ಗ", imgType:"emoji" },
+      { id:"w19_3", kd:"ಚ", ks:"ಚ", tr:"ca", hi:"च", en:"ca", img:"ಚ", imgType:"emoji" },
+      { id:"w19_4", kd:"ಜ", ks:"ಜ", tr:"ja", hi:"ज", en:"ja", img:"ಜ", imgType:"emoji" },
+      { id:"w19_5", kd:"ಟ", ks:"ಟ", tr:"ṭa", hi:"ट", en:"ṭa", img:"ಟ", imgType:"emoji" },
+      { id:"w19_6", kd:"ಡ", ks:"ಡ", tr:"ḍa", hi:"ड", en:"ḍa", img:"ಡ", imgType:"emoji" },
+      { id:"w19_7", kd:"ತ", ks:"ತ", tr:"ta", hi:"त", en:"ta", img:"ತ", imgType:"emoji" },
+      { id:"w19_8", kd:"ದ", ks:"ದ", tr:"da", hi:"द", en:"da", img:"ದ", imgType:"emoji" }
+    ]
+  },
+  {
+    id: 20, title: "कन्नड लिपि: व्यंजन 2", titleEn: "Kannada Script: Consonants 2", icon: "ಪ", isBonus: true,
+    words: [
+      { id:"w20_1", kd:"ಪ", ks:"ಪ", tr:"pa", hi:"प", en:"pa", img:"ಪ", imgType:"emoji" },
+      { id:"w20_2", kd:"ಬ", ks:"ಬ", tr:"ba", hi:"ब", en:"ba", img:"ಬ", imgType:"emoji" },
+      { id:"w20_3", kd:"ಮ", ks:"ಮ", tr:"ma", hi:"म", en:"ma", img:"ಮ", imgType:"emoji" },
+      { id:"w20_4", kd:"ಯ", ks:"ಯ", tr:"ya", hi:"य", en:"ya", img:"ಯ", imgType:"emoji" },
+      { id:"w20_5", kd:"ರ", ks:"ರ", tr:"ra", hi:"र", en:"ra", img:"ರ", imgType:"emoji" },
+      { id:"w20_6", kd:"ಲ", ks:"ಲ", tr:"la", hi:"ल", en:"la", img:"ಲ", imgType:"emoji" },
+      { id:"w20_7", kd:"ಹ", ks:"ಹ", tr:"ha", hi:"ह", en:"ha", img:"ಹ", imgType:"emoji" },
+      { id:"w20_8", kd:"ಳ", ks:"ಳ", tr:"ḷa", hi:"ळ", en:"ḷa", img:"ಳ", imgType:"emoji" }
+    ]
+  }
+];
+
+// ====================== PROFILE & STATE ======================
+const PROFILES_KEY = "kannada_learn_profiles";
+const ACTIVE_KEY = "kannada_learn_active";
+const AVATARS = ["🧑‍🎓","👩‍🎓","🧑","👩","👦","👧","🦸","🦸‍♀️","🧑‍💻","👩‍💻"];
+let activeProfileId = null;
+let state = null;
+
+function todayStr() { return new Date().toISOString().split("T")[0]; }
+
+function getProfiles() {
+  try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch(e) { return []; }
+}
+function saveProfiles(profiles) { localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); }
+
+function defaultState(name, avatar) {
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name: name || "User",
+    avatar: avatar || "🧑‍🎓",
+    xp: 0, level: 1,
+    streak: { current: 0, best: 0, lastDate: null },
+    hearts: { count: 5, lastRegenTime: Date.now() },
+    dailyGoal: { target: 20, todayXP: 0, date: todayStr() },
+    lessons: {},
+    words: {},
+    settings: { theme: "light" }
+  };
+}
+
+function loadProfile(profileId) {
+  const profiles = getProfiles();
+  const profile = profiles.find(p => p.id === profileId);
+  if (profile) {
+    state = profile;
+    activeProfileId = profile.id;
+    localStorage.setItem(ACTIVE_KEY, profileId);
+    return true;
+  }
+  return false;
+}
+
+function saveState() {
+  if (!state || !activeProfileId) return;
+  const profiles = getProfiles();
+  const idx = profiles.findIndex(p => p.id === activeProfileId);
+  if (idx >= 0) { profiles[idx] = state; }
+  else { profiles.push(state); }
+  saveProfiles(profiles);
+}
+
+function createNewProfile(name, avatar) {
+  const profile = defaultState(name, avatar);
+  const profiles = getProfiles();
+  profiles.push(profile);
+  saveProfiles(profiles);
+  loadProfile(profile.id);
+  return profile;
+}
+
+function deleteProfile(profileId) {
+  let profiles = getProfiles();
+  profiles = profiles.filter(p => p.id !== profileId);
+  saveProfiles(profiles);
+  if (activeProfileId === profileId) {
+    activeProfileId = null;
+    state = null;
+    localStorage.removeItem(ACTIVE_KEY);
+  }
+}
+
+// Migrate old single-profile data if it exists
+function migrateOldData() {
+  try {
+    const old = JSON.parse(localStorage.getItem("kannada_learn_v1"));
+    if (old && old.xp !== undefined && getProfiles().length === 0) {
+      const profile = { ...defaultState("User", "🧑‍🎓"), ...old, id: "migrated" };
+      const profiles = [profile];
+      saveProfiles(profiles);
+      localStorage.removeItem("kannada_learn_v1");
+      return profile.id;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ====================== HEARTS ======================
+function regenHearts() {
+  const now = Date.now();
+  const elapsed = now - state.hearts.lastRegenTime;
+  const gained = Math.floor(elapsed / (30 * 60 * 1000));
+  if (gained > 0 && state.hearts.count < 5) {
+    state.hearts.count = Math.min(5, state.hearts.count + gained);
+    state.hearts.lastRegenTime = now;
+    saveState();
+  }
+}
+function loseHeart() {
+  state.hearts.count = Math.max(0, state.hearts.count - 1);
+  saveState();
+}
+
+// ====================== STREAK ======================
+function updateStreak() {
+  const today = todayStr();
+  if (state.streak.lastDate === today) return;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().split("T")[0];
+  if (state.streak.lastDate === yStr) {
+    state.streak.current++;
+  } else {
+    state.streak.current = 1;
+  }
+  state.streak.best = Math.max(state.streak.best, state.streak.current);
+  state.streak.lastDate = today;
+  saveState();
+}
+
+// ====================== DAILY GOAL ======================
+function checkDailyGoal() {
+  const today = todayStr();
+  if (state.dailyGoal.date !== today) {
+    state.dailyGoal.todayXP = 0;
+    state.dailyGoal.date = today;
+  }
+}
+
+// ====================== TTS ======================
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "kn-IN";
+  u.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+// Safe speak helper that looks up the Kannada script text for TTS
+function speakWord(wordId) {
+  let word = null;
+  for (const l of LESSONS) {
+    word = l.words.find(w => w.id === wordId);
+    if (word) break;
+  }
+  if (word) speak(word.ks || word.kd);
+}
+
+// ====================== SCREEN NAVIGATION ======================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Update nav active state on the visible screen's bottom nav
+  const activeScreen = document.getElementById(id);
+  const navMap = { homeScreen: 0, reviewScreen: 1, statsScreen: 2 };
+  if (navMap[id] !== undefined) {
+    activeScreen.querySelectorAll('.nav-item').forEach((n, i) => {
+      n.classList.toggle('active', i === navMap[id]);
+    });
+  }
+  if (id === 'loginScreen') renderLoginScreen();
+  if (id === 'homeScreen') renderHome();
+  if (id === 'reviewScreen') renderReview();
+  if (id === 'statsScreen') renderStats();
+  window.scrollTo(0, 0);
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  state.settings.theme = next;
+  saveState();
+}
+
+// ====================== HOME SCREEN ======================
+function renderHome() {
+  if (!state) return;
+  regenHearts();
+  checkDailyGoal();
+  document.getElementById('homeAvatar').textContent = state.avatar || '👤';
+  document.getElementById('homeName').textContent = state.name || 'User';
+  document.getElementById('homeStreak').textContent = state.streak.current;
+  document.getElementById('homeXP').textContent = state.xp;
+  document.getElementById('homeHearts').textContent = state.hearts.count;
+  document.getElementById('goalProgress').textContent = state.dailyGoal.todayXP;
+  document.getElementById('goalTarget').textContent = state.dailyGoal.target;
+  const pct = Math.min(100, (state.dailyGoal.todayXP / state.dailyGoal.target) * 100);
+  document.getElementById('goalFill').style.width = pct + '%';
+
+  const tree = document.getElementById('skillTree');
+  tree.innerHTML = '';
+  const mainLessons = LESSONS.filter(l => !l.isBonus);
+  const bonusLessons = LESSONS.filter(l => l.isBonus);
+
+  mainLessons.forEach((lesson, i) => {
+    const ls = state.lessons[lesson.id] || {};
+    const prevCompleted = i === 0 || (state.lessons[mainLessons[i-1].id] || {}).completed;
+    const isAvailable = prevCompleted && !ls.completed;
+    const isCompleted = ls.completed;
+    const isPerfect = ls.bestScore === 100;
+
+    if (i > 0) {
+      const conn = document.createElement('div');
+      conn.className = 'tree-connector' + (state.lessons[mainLessons[i-1].id]?.completed ? ' completed' : '');
+      tree.appendChild(conn);
+    }
+
+    const row = document.createElement('div');
+    row.className = 'tree-row';
+    const node = document.createElement('div');
+    node.className = 'tree-node';
+    if (isPerfect) node.classList.add('perfect');
+    else if (isCompleted) node.classList.add('completed');
+    else if (isAvailable) node.classList.add('available');
+    else node.classList.add('locked');
+    node.textContent = lesson.icon;
+    if (isAvailable || isCompleted) {
+      node.onclick = () => startLesson(lesson.id);
+    }
+    const label = document.createElement('div');
+    label.className = 'tree-label';
+    label.textContent = lesson.title;
+    row.appendChild(node);
+    row.appendChild(label);
+    tree.appendChild(row);
+  });
+
+  // Bonus section
+  if (bonusLessons.length > 0) {
+    const section = document.createElement('div');
+    section.className = 'bonus-section';
+    section.innerHTML = '<h3>✨ बोनस: कन्नड लिपि सीखो (वैकल्पिक)</h3>';
+    const brow = document.createElement('div');
+    brow.className = 'bonus-row';
+    bonusLessons.forEach(lesson => {
+      const ls = state.lessons[lesson.id] || {};
+      const col = document.createElement('div');
+      col.className = 'tree-row';
+      const node = document.createElement('div');
+      node.className = 'tree-node bonus';
+      if (ls.completed) node.classList.add('completed');
+      node.textContent = lesson.icon;
+      node.onclick = () => startLesson(lesson.id);
+      const label = document.createElement('div');
+      label.className = 'tree-label';
+      label.textContent = lesson.title;
+      col.appendChild(node);
+      col.appendChild(label);
+      brow.appendChild(col);
+    });
+    section.appendChild(brow);
+    tree.appendChild(section);
+  }
+}
+
+// ====================== LESSON ENGINE ======================
+let currentLesson = null;
+let lessonQuestions = [];
+let currentQIndex = 0;
+let lessonScore = { correct: 0, total: 0, xpEarned: 0 };
+let awaitingNext = false;
+
+function startLesson(lessonId) {
+  regenHearts();
+  if (state.hearts.count <= 0) {
+    document.getElementById('heartsOverlay').classList.add('show');
+    return;
+  }
+  currentLesson = LESSONS.find(l => l.id === lessonId);
+  if (!currentLesson) return;
+  lessonQuestions = generateQuestions(currentLesson);
+  currentQIndex = 0;
+  lessonScore = { correct: 0, total: 0, xpEarned: 0 };
+  awaitingNext = false;
+  hideFeedback();
+  showScreen('lessonScreen');
+  renderLessonUI();
+}
+
+function generateQuestions(lesson) {
+  const words = lesson.words;
+  const questions = [];
+
+  // Round 1: Flashcards for all words
+  words.forEach(w => {
+    questions.push({ type: 'flashcard', word: w });
+  });
+
+  // Round 2: MCQ - Kannada → Hindi (5 questions, random words)
+  shuffle(words).slice(0, Math.min(5, words.length)).forEach(w => {
+    const opts = generateMCQOptions(w, words, 'hi');
+    questions.push({ type: 'mcq', word: w, options: opts, direction: 'kd_to_hi' });
+  });
+
+  // Round 3: Reverse MCQ - Hindi → Kannada (5 questions)
+  shuffle(words).slice(0, Math.min(5, words.length)).forEach(w => {
+    const opts = generateMCQOptions(w, words, 'kd');
+    questions.push({ type: 'mcq', word: w, options: opts, direction: 'hi_to_kd' });
+  });
+
+  // Round 4: Matching (1 set of 4-5 pairs)
+  const matchWords = shuffle(words).slice(0, Math.min(5, words.length));
+  questions.push({ type: 'matching', words: matchWords });
+
+  // Round 5: Listen & Pick (4 questions)
+  shuffle(words).slice(0, Math.min(4, words.length)).forEach(w => {
+    const opts = generateMCQOptions(w, words, 'kd');
+    questions.push({ type: 'listen', word: w, options: opts });
+  });
+
+  return questions;
+}
+
+function generateMCQOptions(correctWord, allWords, field) {
+  const correct = correctWord[field];
+  const distractors = allWords.filter(w => w[field] !== correct).map(w => w[field]);
+  // Add some from other lessons if not enough
+  if (distractors.length < 3) {
+    LESSONS.forEach(l => {
+      l.words.forEach(w => {
+        if (w[field] !== correct && !distractors.includes(w[field])) {
+          distractors.push(w[field]);
+        }
+      });
+    });
+  }
+  const selected = shuffle(distractors).slice(0, 3);
+  const options = shuffle([correct, ...selected]);
+  return options.map(o => ({ text: o, correct: o === correct }));
+}
+
+function renderLessonUI() {
+  const q = lessonQuestions[currentQIndex];
+  if (!q) { finishLesson(); return; }
+  const pct = (currentQIndex / lessonQuestions.length) * 100;
+  document.getElementById('lessonProgress').style.width = pct + '%';
+  renderHearts();
+  hideFeedback();
+
+  const content = document.getElementById('lessonContent');
+  content.innerHTML = '';
+
+  switch(q.type) {
+    case 'flashcard': renderFlashcard(content, q); break;
+    case 'mcq': renderMCQ(content, q); break;
+    case 'matching': renderMatching(content, q); break;
+    case 'listen': renderListen(content, q); break;
+  }
+}
+
+function renderHearts() {
+  const h = document.getElementById('lessonHearts');
+  h.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    h.innerHTML += i < state.hearts.count ? '❤️' : '🤍';
+  }
+}
+
+// ---- FLASHCARD ----
+function renderFlashcard(container, q) {
+  const w = q.word;
+  container.innerHTML = `
+    <div class="question-label">नया शब्द सीखो</div>
+    <div class="flashcard" onclick="flipCard(this)">
+      <div class="word-image">${w.img}</div>
+      <div class="word-display">${w.kd}</div>
+      <div class="transliteration">${w.tr}</div>
+      <button class="speak-btn" onclick="event.stopPropagation(); speakWord('${w.id}')">🔊</button>
+      <div class="reveal">${w.hi}</div>
+      <div class="tap-hint">👆 अर्थ देखने के लिए टैप करो</div>
+    </div>
+    <button class="continue-btn" onclick="nextQuestion()">आगे →</button>
+  `;
+  speakWord(w.id);
+}
+
+function flipCard(card) { card.classList.toggle('flipped'); }
+
+// ---- MCQ ----
+function renderMCQ(container, q) {
+  const w = q.word;
+  const isKdToHi = q.direction === 'kd_to_hi';
+  const prompt = isKdToHi ? w.kd : w.hi;
+  const label = isKdToHi ? `"${prompt}" का हिंदी में मतलब?` : `"${prompt}" को कन्नड में क्या कहते हैं?`;
+
+  let html = `<div class="question-label">${label}</div>`;
+  if (isKdToHi) {
+    html += `<div class="word-image">${w.img}</div>`;
+    html += `<div class="word-display">${w.kd}</div>`;
+    html += `<button class="speak-btn" onclick="speakWord('${w.id}')" style="margin:0 auto 12px;">🔊</button>`;
+  } else {
+    html += `<div class="word-image">${w.img}</div>`;
+    html += `<div class="word-display">${w.hi}</div>`;
+  }
+  html += '<div class="options">';
+  q.options.forEach((opt, i) => {
+    html += `<button class="option-btn" onclick="checkMCQ(this, ${opt.correct})">${opt.text}</button>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  if (isKdToHi) speakWord(w.id);
+}
+
+function checkMCQ(btn, isCorrect) {
+  if (awaitingNext) return;
+  awaitingNext = true;
+  const allBtns = btn.parentElement.querySelectorAll('.option-btn');
+  allBtns.forEach(b => {
+    b.classList.add('disabled');
+    if (b.textContent === btn.textContent && isCorrect) b.classList.add('correct');
+    if (b.textContent === btn.textContent && !isCorrect) b.classList.add('wrong');
+    // Highlight the correct answer
+    const qOpts = lessonQuestions[currentQIndex].options;
+    const correctOpt = qOpts.find(o => o.correct);
+    if (b.textContent === correctOpt.text) b.classList.add('correct');
+  });
+  handleAnswer(isCorrect);
+}
+
+// ---- MATCHING ----
+let matchState = { selected: null, matchedCount: 0, totalPairs: 0 };
+
+function renderMatching(container, q) {
+  const words = q.words;
+  matchState = { selected: null, matchedCount: 0, totalPairs: words.length };
+  const leftItems = shuffle([...words]);
+  const rightItems = shuffle([...words]);
+
+  let html = '<div class="question-label">जोड़ी मिलाओ</div><div class="match-area">';
+  html += '<div class="match-col">';
+  leftItems.forEach(w => {
+    html += `<div class="match-item" data-side="left" data-id="${w.id}" onclick="matchClick(this)">${w.kd}</div>`;
+  });
+  html += '</div><div class="match-col">';
+  rightItems.forEach(w => {
+    html += `<div class="match-item" data-side="right" data-id="${w.id}" onclick="matchClick(this)">${w.hi}</div>`;
+  });
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function matchClick(el) {
+  if (el.classList.contains('matched')) return;
+  const side = el.dataset.side;
+  const id = el.dataset.id;
+
+  if (!matchState.selected) {
+    el.classList.add('selected');
+    matchState.selected = { el, side, id };
+    return;
+  }
+
+  if (matchState.selected.side === side) {
+    matchState.selected.el.classList.remove('selected');
+    el.classList.add('selected');
+    matchState.selected = { el, side, id };
+    return;
+  }
+
+  // Check match
+  if (matchState.selected.id === id) {
+    matchState.selected.el.classList.remove('selected');
+    matchState.selected.el.classList.add('matched');
+    el.classList.add('matched');
+    matchState.matchedCount++;
+    lessonScore.correct++;
+    lessonScore.total++;
+    updateWordStats(id, true);
+    if (matchState.matchedCount === matchState.totalPairs) {
+      lessonScore.xpEarned += 20;
+      awaitingNext = true;
+      setTimeout(() => {
+        showFeedback(true, 'बहुत बढ़िया! सब जोड़ी मिल गई! +20 XP');
+      }, 300);
+    }
+  } else {
+    matchState.selected.el.classList.remove('selected');
+    el.classList.add('wrong-match');
+    matchState.selected.el.classList.add('wrong-match');
+    lessonScore.total++;
+    setTimeout(() => {
+      el.classList.remove('wrong-match');
+      document.querySelectorAll('.wrong-match').forEach(e => e.classList.remove('wrong-match'));
+    }, 600);
+    loseHeart();
+    renderHearts();
+    if (state.hearts.count <= 0) {
+      document.getElementById('heartsOverlay').classList.add('show');
+    }
+  }
+  matchState.selected = null;
+}
+
+// ---- LISTEN & PICK ----
+function renderListen(container, q) {
+  const w = q.word;
+  let html = `<div class="question-label">सुनो और सही शब्द चुनो 🎧</div>`;
+  html += `<button class="speak-btn listen-big" onclick="speakWord('${w.id}')">🔊</button>`;
+  html += `<div style="font-size:14px; color:var(--text-secondary); margin:8px 0;">आवाज़ सुनने के लिए बटन दबाओ</div>`;
+  html += '<div class="options">';
+  q.options.forEach(opt => {
+    html += `<button class="option-btn" onclick="checkMCQ(this, ${opt.correct})">${opt.text}</button>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  speakWord(w.id);
+}
+
+// ====================== ANSWER HANDLING ======================
+function handleAnswer(isCorrect, correctAnswer) {
+  lessonScore.total++;
+  if (isCorrect) {
+    lessonScore.correct++;
+    lessonScore.xpEarned += 10;
+    showFeedback(true, 'सही जवाब! +10 XP');
+  } else {
+    loseHeart();
+    renderHearts();
+    showFeedback(false, correctAnswer ? `ग़लत! सही जवाब: ${correctAnswer}` : 'ग़लत जवाब!');
+    if (state.hearts.count <= 0) {
+      setTimeout(() => {
+        document.getElementById('heartsOverlay').classList.add('show');
+      }, 500);
+    }
+  }
+  // Update word stats
+  const q = lessonQuestions[currentQIndex];
+  if (q.word) updateWordStats(q.word.id, isCorrect);
+}
+
+function updateWordStats(wordId, correct) {
+  if (!state.words[wordId]) {
+    state.words[wordId] = { correct: 0, seen: 0, srLevel: 0, nextReview: todayStr() };
+  }
+  const ws = state.words[wordId];
+  ws.seen++;
+  if (correct) {
+    ws.correct++;
+    ws.srLevel = Math.min(5, ws.srLevel + 1);
+  } else {
+    ws.srLevel = Math.max(0, ws.srLevel - 2);
+  }
+  const intervals = [1, 2, 4, 7, 14, 30];
+  const next = new Date();
+  next.setDate(next.getDate() + intervals[ws.srLevel]);
+  ws.nextReview = next.toISOString().split('T')[0];
+  saveState();
+}
+
+function showFeedback(correct, text) {
+  const bar = document.getElementById('feedbackBar');
+  bar.className = 'feedback-bar show ' + (correct ? 'correct' : 'wrong');
+  document.getElementById('feedbackText').textContent = text;
+}
+
+function hideFeedback() {
+  document.getElementById('feedbackBar').className = 'feedback-bar';
+}
+
+function nextQuestion() {
+  awaitingNext = false;
+  currentQIndex++;
+  if (currentQIndex >= lessonQuestions.length) {
+    finishLesson();
+  } else {
+    renderLessonUI();
+  }
+}
+
+function finishLesson() {
+  // Calculate final score
+  const accuracy = lessonScore.total > 0 ? Math.round((lessonScore.correct / lessonScore.total) * 100) : 0;
+  let bonusXP = 25; // completion bonus
+  if (accuracy === 100) bonusXP += 50;
+  const totalXP = lessonScore.xpEarned + bonusXP;
+  const isReview = currentLesson.id === 'review';
+
+  // Update state
+  state.xp += totalXP;
+  state.level = Math.floor(state.xp / 100) + 1;
+  if (!isReview) {
+    if (!state.lessons[currentLesson.id]) state.lessons[currentLesson.id] = {};
+    const ls = state.lessons[currentLesson.id];
+    ls.completed = true;
+    ls.attempts = (ls.attempts || 0) + 1;
+    ls.bestScore = Math.max(ls.bestScore || 0, accuracy);
+    ls.lastAttempt = todayStr();
+  }
+
+  checkDailyGoal();
+  state.dailyGoal.todayXP += totalXP;
+  updateStreak();
+  saveState();
+
+  // Show complete screen
+  hideFeedback();
+  document.getElementById('completeXP').textContent = totalXP;
+  document.getElementById('completeAcc').textContent = accuracy + '%';
+  document.getElementById('completeStreak').textContent = state.streak.current;
+  document.getElementById('completeLesson').textContent = `"${currentLesson.title}" पूरा हुआ!`;
+  showScreen('completeScreen');
+}
+
+function exitLesson() {
+  hideFeedback();
+  showScreen('homeScreen');
+}
+
+function closeHeartsOverlay() {
+  document.getElementById('heartsOverlay').classList.remove('show');
+  showScreen('homeScreen');
+}
+
+// ====================== REVIEW SCREEN ======================
+function renderReview() {
+  regenHearts();
+  document.getElementById('revStreak').textContent = state.streak.current;
+  document.getElementById('revXP').textContent = state.xp;
+  const container = document.getElementById('reviewContent');
+  const today = todayStr();
+  const dueWords = [];
+
+  LESSONS.forEach(lesson => {
+    lesson.words.forEach(w => {
+      const ws = state.words[w.id];
+      if (ws && ws.seen > 0 && ws.nextReview <= today) {
+        dueWords.push({ ...w, stats: ws });
+      }
+    });
+  });
+
+  if (dueWords.length === 0) {
+    container.innerHTML = '<div class="review-empty"><div style="font-size:48px;margin-bottom:16px;">🎯</div><p>कोई शब्द दोहराने के लिए नहीं!<br>नया पाठ पूरा करो।</p></div>';
+    return;
+  }
+
+  let html = `<div style="text-align:center;margin-bottom:16px;color:var(--text-secondary);">${dueWords.length} शब्द दोहराने हैं</div>`;
+  html += '<div class="review-word-list">';
+  dueWords.forEach(w => {
+    html += `<div class="review-word-item">
+      <div><span class="rw-kannada">${w.kd}</span> <span class="rw-hindi" style="margin-left:8px;">${w.hi}</span></div>
+      <button class="speak-btn" style="width:36px;height:36px;font-size:18px;" onclick="speakWord('${w.id}')">🔊</button>
+    </div>`;
+  });
+  html += '</div>';
+  html += `<div style="text-align:center;margin-top:20px;">
+    <button class="continue-btn" style="max-width:300px;" onclick="startReviewPractice()">अभ्यास शुरू करो</button>
+  </div>`;
+  container.innerHTML = html;
+}
+
+function startReviewPractice() {
+  const today = todayStr();
+  const dueWords = [];
+  LESSONS.forEach(lesson => {
+    lesson.words.forEach(w => {
+      const ws = state.words[w.id];
+      if (ws && ws.seen > 0 && ws.nextReview <= today) {
+        dueWords.push(w);
+      }
+    });
+  });
+  if (dueWords.length === 0) return;
+
+  // Create a virtual lesson from due words
+  currentLesson = { id: 'review', title: 'दोहराई', icon: '🔄', words: dueWords.slice(0, 10) };
+  lessonQuestions = [];
+  const words = currentLesson.words;
+
+  // MCQ rounds only for review
+  shuffle(words).forEach(w => {
+    const opts = generateMCQOptions(w, words.length >= 4 ? words : LESSONS[0].words, 'hi');
+    lessonQuestions.push({ type: 'mcq', word: w, options: opts, direction: 'kd_to_hi' });
+  });
+  shuffle(words).slice(0, Math.min(5, words.length)).forEach(w => {
+    const opts = generateMCQOptions(w, words.length >= 4 ? words : LESSONS[0].words, 'kd');
+    lessonQuestions.push({ type: 'mcq', word: w, options: opts, direction: 'hi_to_kd' });
+  });
+
+  currentQIndex = 0;
+  lessonScore = { correct: 0, total: 0, xpEarned: 0 };
+  awaitingNext = false;
+  showScreen('lessonScreen');
+  renderLessonUI();
+}
+
+// ====================== STATS SCREEN ======================
+function renderStats() {
+  document.getElementById('statStreak').textContent = state.streak.current;
+  document.getElementById('statXP').textContent = state.xp;
+
+  const totalWords = Object.keys(state.words).length;
+  const masteredWords = Object.values(state.words).filter(w => w.srLevel >= 4).length;
+  const completedLessons = Object.values(state.lessons).filter(l => l.completed).length;
+  const totalLessons = LESSONS.length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stats-card"><div class="sc-val">⚡ ${state.xp}</div><div class="sc-lbl">कुल XP</div></div>
+    <div class="stats-card"><div class="sc-val">🏆 ${state.level}</div><div class="sc-lbl">लेवल</div></div>
+    <div class="stats-card"><div class="sc-val">🔥 ${state.streak.best}</div><div class="sc-lbl">सबसे लंबी स्ट्रीक</div></div>
+    <div class="stats-card"><div class="sc-val">📚 ${completedLessons}/${totalLessons}</div><div class="sc-lbl">पाठ पूरे</div></div>
+    <div class="stats-card"><div class="sc-val">📝 ${totalWords}</div><div class="sc-lbl">शब्द सीखे</div></div>
+    <div class="stats-card"><div class="sc-val">⭐ ${masteredWords}</div><div class="sc-lbl">शब्द याद हैं</div></div>
+  `;
+}
+
+// ====================== UTILS ======================
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ====================== LOGIN SCREEN ======================
+let selectedAvatar = AVATARS[0];
+
+function renderLoginScreen() {
+  const profiles = getProfiles();
+  const existingDiv = document.getElementById('existingProfiles');
+  const newSection = document.getElementById('newProfileSection');
+
+  // Render avatar grid
+  const avatarGrid = document.getElementById('avatarGrid');
+  avatarGrid.innerHTML = AVATARS.map(a =>
+    `<div class="avatar-option${a === selectedAvatar ? ' selected' : ''}" onclick="selectAvatar('${a}')">${a}</div>`
+  ).join('');
+
+  // Render existing profiles
+  if (profiles.length > 0) {
+    let html = '<h3>प्रोफ़ाइल चुनो</h3><div class="profile-list">';
+    profiles.forEach(p => {
+      const safeName = p.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      html += `<div class="profile-item" onclick="loginAs('${p.id}')">
+        <span class="pi-avatar">${p.avatar}</span>
+        <div class="pi-info">
+          <div class="pi-name">${p.name}</div>
+          <div class="pi-stats">⚡ ${p.xp} XP · 📚 ${Object.values(p.lessons || {}).filter(l => l.completed).length} पाठ · 🔥 ${p.streak?.current || 0} स्ट्रीक</div>
+        </div>
+        <button class="pi-delete" onclick="event.stopPropagation(); confirmDeleteProfile('${p.id}', '${safeName}')" title="हटाओ">🗑️</button>
+      </div>`;
+    });
+    html += '</div>';
+    html += '<div class="login-divider">या</div>';
+    existingDiv.innerHTML = html;
+    newSection.querySelector('h3').textContent = 'नया प्रोफ़ाइल बनाओ';
+  } else {
+    existingDiv.innerHTML = '';
+    newSection.querySelector('h3').textContent = 'अपना प्रोफ़ाइल बनाओ';
+  }
+}
+
+function selectAvatar(avatar) {
+  selectedAvatar = avatar;
+  document.querySelectorAll('.avatar-option').forEach(el => {
+    el.classList.toggle('selected', el.textContent === avatar);
+  });
+}
+
+function createProfile() {
+  const nameInput = document.getElementById('profileNameInput');
+  const name = nameInput.value.trim();
+  if (!name) {
+    nameInput.style.borderColor = 'var(--red)';
+    nameInput.placeholder = 'कृपया अपना नाम लिखो!';
+    return;
+  }
+  createNewProfile(name, selectedAvatar);
+  nameInput.value = '';
+  document.documentElement.setAttribute('data-theme', state.settings.theme || 'light');
+  showScreen('homeScreen');
+}
+
+function loginAs(profileId) {
+  if (loadProfile(profileId)) {
+    document.documentElement.setAttribute('data-theme', state.settings.theme || 'light');
+    showScreen('homeScreen');
+  }
+}
+
+function confirmDeleteProfile(id, name) {
+  if (confirm(`"${name}" का प्रोफ़ाइल हटाना है? सारा प्रोग्रेस मिट जाएगा!`)) {
+    deleteProfile(id);
+    renderLoginScreen();
+  }
+}
+
+// ====================== INIT ======================
+function init() {
+  // Migrate old single-profile data
+  const migratedId = migrateOldData();
+
+  // Try to restore last active profile
+  const lastActive = migratedId || localStorage.getItem(ACTIVE_KEY);
+  if (lastActive && loadProfile(lastActive)) {
+    document.documentElement.setAttribute('data-theme', state.settings.theme || 'light');
+    regenHearts();
+    checkDailyGoal();
+    showScreen('homeScreen');
+  } else {
+    // Show login screen
+    renderLoginScreen();
+  }
+}
+
+init();
+
+// ====================== PWA ======================
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./kannada-sw.js').catch(() => {});
+}
+
+// Generate PNG apple-touch-icon dynamically (iOS doesn't support SVG icons well)
+(function generateAppleTouchIcon() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 180; canvas.height = 180;
+  const ctx = canvas.getContext('2d');
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 180, 180);
+  grad.addColorStop(0, '#7c3aed');
+  grad.addColorStop(1, '#a78bfa');
+  ctx.fillStyle = grad;
+  // Rounded rect
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 180, 180, 36);
+  ctx.fill();
+  // Kannada letter
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 80px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('ಕ', 90, 65);
+  // Hindi text
+  ctx.font = 'bold 30px sans-serif';
+  ctx.fillText('Kannada', 90, 120);
+  ctx.fillText('Easy', 90, 155);
+  // Set as apple-touch-icon
+  const link = document.querySelector('link[rel="apple-touch-icon"]');
+  if (link) link.href = canvas.toDataURL('image/png');
+})();
+</script>
+</body>
+</html>
