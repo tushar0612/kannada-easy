@@ -1324,12 +1324,12 @@ function renderFlashcard(container, q) {
   const w = q.word;
   const s = SENTENCES[w.id];
   const exampleHtml = s ? `
-      <div class="example-sentence">
-        <div class="ex-label">📖 उदाहरण:</div>
-        <div class="ex-kannada">${s.ex}</div>
-        <div class="ex-hindi">${s.exHi}</div>
-        <button class="speak-btn" style="width:32px;height:32px;font-size:16px;margin:4px auto 0;" onclick="event.stopPropagation(); speak('${(s.exKs||'').replace(/'/g,"\\'")}')">🔊</button>
-      </div>` : '';
+    <div class="example-sentence" id="flashcardExample" style="display:none;">
+      <div class="ex-label">📖 उदाहरण:</div>
+      <div class="ex-kannada">${s.ex}</div>
+      <div class="ex-hindi">${s.exHi}</div>
+      <button class="speak-btn" style="width:32px;height:32px;font-size:16px;margin:4px auto 0;" onclick="speak('${(s.exKs||'').replace(/'/g,"\\'")}')">🔊</button>
+    </div>` : '';
   container.innerHTML = `
     <div class="question-label">नया शब्द सीखो</div>
     <div class="flashcard" onclick="flipCard(this)">
@@ -1337,15 +1337,20 @@ function renderFlashcard(container, q) {
       <div class="word-display">${w.kd}</div>
       <div class="transliteration">${w.tr}</div>
       <button class="speak-btn" onclick="event.stopPropagation(); speakWord('${w.id}')">🔊</button>
-      <div class="reveal">${w.hi}${exampleHtml}</div>
+      <div class="reveal">${w.hi}</div>
       <div class="tap-hint">👆 अर्थ देखने के लिए टैप करो</div>
     </div>
+    ${exampleHtml}
     <button class="continue-btn" onclick="nextQuestion()">आगे →</button>
   `;
   speakWord(w.id);
 }
 
-function flipCard(card) { card.classList.toggle('flipped'); }
+function flipCard(card) {
+  card.classList.toggle('flipped');
+  const ex = document.getElementById('flashcardExample');
+  if (ex) ex.style.display = card.classList.contains('flipped') ? 'block' : 'none';
+}
 
 // ---- MCQ ----
 function renderMCQ(container, q) {
