@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kannada-learn-v1';
+const CACHE_NAME = 'kannada-learn-v2';
 const ASSETS = [
   './kannada-learn.html',
   './kannada-icon.svg',
